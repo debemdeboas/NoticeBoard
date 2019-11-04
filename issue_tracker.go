@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"strconv"
@@ -73,4 +74,33 @@ func main() {
 		Ind: make(chan BEB.BestEffortBroadcast_Ind_Message)}
 
 	beb.Init(addrs[0])
+	// enviador de broadcasts
+	go func() {
+
+		scanner := bufio.NewScanner(os.Stdin)
+		var msg string
+
+		for {
+			if scanner.Scan() {
+				msg = scanner.Text()
+			}
+			req := BEB.BestEffortBroadcast_Req_Message{
+				Addresses: receivers,
+				Message:   msg}
+			beb.Req <- req
+		}
+	}()
+
+	// receptor de broadcasts
+	go func() {
+		for {
+
+			in := <-beb.Ind
+			fmt.Printf("Message from %v: %v\n", in.From, in.Message)
+
+		}
+	}()
+
+	blq := make(chan int)
+	<-blq
 }

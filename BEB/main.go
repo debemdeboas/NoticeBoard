@@ -52,7 +52,6 @@ func (module BestEffortBroadcast_Module) Start() {
 			}
 		}
 	}()
-
 }
 
 func (module BestEffortBroadcast_Module) Broadcast(message BestEffortBroadcast_Req_Message) {
@@ -63,15 +62,12 @@ func (module BestEffortBroadcast_Module) Broadcast(message BestEffortBroadcast_R
 		module.Pp2plink.Req <- msg
 		fmt.Println("Sent to " + message.Addresses[i])
 	}
-
 }
 
 func (module BestEffortBroadcast_Module) Deliver(message BestEffortBroadcast_Ind_Message) {
 
 	fmt.Println("Received '" + message.Message + "' from " + message.From)
 	module.Ind <- message
-	fmt.Println("# End BEB Received")
-
 }
 
 func BEB2PP2PLink(message BestEffortBroadcast_Req_Message) PP2PLink.PP2PLink_Req_Message {

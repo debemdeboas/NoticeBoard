@@ -89,15 +89,15 @@ func (module PP2PLink) Start(address string) {
 							continue
 						}
 
-						// fmt.Println("!!!!!!!!"+string(content))
-						// fmt.Println("????????"+actual)
+						fmt.Println("!!!!!!!!" + string(content))
+						fmt.Println("????????" + actual)
 
 						msg := PP2PLink_Ind_Message{
 							From:    conn.RemoteAddr().String(),
 							Message: string(actual)}
 
 						module.Ind <- msg
-						// fmt.Println(msg)
+						fmt.Println(msg)
 					}
 				}
 			}()
