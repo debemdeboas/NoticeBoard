@@ -15,9 +15,11 @@
 
 package PP2PLink
 
-import "fmt"
-import "net"
-import "strings"
+import (
+	"fmt"
+	"net"
+	"strings"
+)
 
 type PP2PLink_Req_Message struct {
 	To      string
@@ -63,7 +65,6 @@ func (module PP2PLink) Start(address string) {
 				continue
 			}
 
-
 			go func() {
 
 				// quando aceita, repetidamente recebe mensagens na conexao TCP (sem fechar)
@@ -79,11 +80,11 @@ func (module PP2PLink) Start(address string) {
 					content := make([]byte, Len)
 					copy(content, buf)
 
-					if !strings.Contains(string(content), "@$@"){
+					if !strings.Contains(string(content), "@$@") {
 						fmt.Println("WHY")
 					}
 
-					for _,actual := range strings.Split(string(content), "@$@"){
+					for _, actual := range strings.Split(string(content), "@$@") {
 						if len(actual) == 0 {
 							continue
 						}

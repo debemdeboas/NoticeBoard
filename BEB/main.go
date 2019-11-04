@@ -8,9 +8,11 @@
 
 package BEB
 
-import "fmt"
+import (
+	"fmt"
 
-import PP2PLink "../Link"
+	PP2PLink "../Link"
+)
 
 type BestEffortBroadcast_Req_Message struct {
 	Addresses []string
@@ -36,7 +38,6 @@ func (module BestEffortBroadcast_Module) Init(address string) {
 		Ind: make(chan PP2PLink.PP2PLink_Ind_Message)}
 	module.Pp2plink.Init(address)
 	module.Start()
-
 }
 
 func (module BestEffortBroadcast_Module) Start() {
