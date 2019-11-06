@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-
-	BEB "./BEB"
 )
 
 // Issue represents an issue
@@ -88,42 +86,15 @@ func main() {
 	addrs := os.Args[1:]
 	fmt.Println(addrs)
 
-	receivers := addrs[1:]
-	fmt.Println(receivers)
-
-	beb := BEB.BestEffortBroadcast_Module {
-		Req: make(chan BEB.BestEffortBroadcast_Req_Message),
-		Ind: make(chan BEB.BestEffortBroadcast_Ind_Message)}
-	beb.Init(addrs[0])
+	// beb := BEB.BestEffortBroadcast_Module{
+	// 	Req: make(chan BEB.BestEffortBroadcast_Req_Message),
+	// 	Ind: make(chan BEB.BestEffortBroadcast_Ind_Message)}
+	// beb.Init(addrs[0])
 
 	//TODO: implement user ID negotiating
 	//maybe use AckReq and AckReply?
 
-
-	// enviador de broadcasts
-	go func() {
-		scanner := bufio.NewScanner(os.Stdin)
-		var msg string
-
-		for {
-			if scanner.Scan() {
-				msg = scanner.Text()
-			}
-			req := BEB.BestEffortBroadcast_Req_Message {
-				Addresses: receivers,
-				Message:   msg}
-			beb.Req <- req
-		}
-	}()
-
-	// receptor de broadcasts
-	go func() {
-		for {
-			in := <-beb.Ind
-			fmt.Printf("Message from %v: %v\n", in.From, in.Message)
-
-		}
-	}()
+	messageDaemon := StartMessageHandlerDaemon(addrs)
 
 	queueUserInput()
 }
