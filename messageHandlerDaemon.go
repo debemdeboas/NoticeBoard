@@ -1,9 +1,12 @@
 package main
 
 import (
+	"strings"
+
 	BEB "./BEB"
 )
 
+// MessageHandlerDaemon Handler for network messages
 type MessageHandlerDaemon struct {
 	beb       BEB.BestEffortBroadcast_Module
 	host      string
@@ -11,6 +14,7 @@ type MessageHandlerDaemon struct {
 	_         struct{}
 }
 
+// SendMessage Send messages
 func (daemon *MessageHandlerDaemon) SendMessage(msg string) {
 	req := BEB.BestEffortBroadcast_Req_Message{
 		Addresses: daemon.receivers,
@@ -18,24 +22,22 @@ func (daemon *MessageHandlerDaemon) SendMessage(msg string) {
 	daemon.beb.Req <- req
 }
 
+// MessageLoop Handle network messages
 func (daemon *MessageHandlerDaemon) MessageLoop() {
-	/*
-		str1 := "MESSAGE_IM_ALIVE;;/data:/;;3"
-		res1 := strings.Split(str1, ";;/data:/;;")
-
-		fmt.Println(res1[0])
-		fmt.Println(res1[1])
-	*/
-
 	for {
 		in := <-daemon.beb.Ind
-		switch in.Message {
+		splitMessage := strings.Split(in.Message, MMessageIDAndDataSeparator)
+		messageID := splitMessage[0]
+		// messageData := splitMessage[1]
+
+		switch messageID {
 		case MImAlive:
 		case MRequestConnectedClients:
 		}
 	}
 }
 
+// StartMessageHandlerDaemon Create and start a new Message Handler Daemon
 func StartMessageHandlerDaemon(addrs []string) MessageHandlerDaemon {
 	beb := BEB.BestEffortBroadcast_Module{
 		Req: make(chan BEB.BestEffortBroadcast_Req_Message),
