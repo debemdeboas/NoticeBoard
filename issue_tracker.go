@@ -86,15 +86,9 @@ func main() {
 	addrs := os.Args[1:]
 	fmt.Println(addrs)
 
-	// beb := BEB.BestEffortBroadcast_Module{
-	// 	Req: make(chan BEB.BestEffortBroadcast_Req_Message),
-	// 	Ind: make(chan BEB.BestEffortBroadcast_Ind_Message)}
-	// beb.Init(addrs[0])
-
-	//TODO: implement user ID negotiating
-	//maybe use AckReq and AckReply?
-
 	messageDaemon := StartMessageHandlerDaemon(addrs)
+	messageDaemon.SendMessage(MImAlive)
 
-	queueUserInput()
+	// queueUserInput()
+	<-(make(chan struct{}))
 }
