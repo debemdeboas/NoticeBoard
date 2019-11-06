@@ -57,9 +57,31 @@ func newUser(b Board, id int) User {
 	return u
 }
 
+func queueUserInput() {
+	scanner := bufio.NewScanner(os.Stdin)
+
+	for {
+		fmt.Printf("1) Create new issue\n2) Edit issue\n3) Delete issue\n0) Exit\n> ")
+		if scanner.Scan() {
+			switch scanner.Text() {
+			case "0":
+				return
+			case "1":
+
+			case "2":
+
+			case "3":
+
+			default:
+				fmt.Println("Invalid input.")
+			}
+		}
+	}
+}
+
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Println("Please specify at least one address:port!")
+		fmt.Println("Please specify at least one address:port")
 		return
 	}
 
@@ -69,14 +91,17 @@ func main() {
 	receivers := addrs[1:]
 	fmt.Println(receivers)
 
-	beb := BEB.BestEffortBroadcast_Module{
+	beb := BEB.BestEffortBroadcast_Module {
 		Req: make(chan BEB.BestEffortBroadcast_Req_Message),
 		Ind: make(chan BEB.BestEffortBroadcast_Ind_Message)}
-
 	beb.Init(addrs[0])
+
+	//TODO: implement user ID negotiating
+	//maybe use AckReq and AckReply?
+
+
 	// enviador de broadcasts
 	go func() {
-
 		scanner := bufio.NewScanner(os.Stdin)
 		var msg string
 
@@ -84,7 +109,7 @@ func main() {
 			if scanner.Scan() {
 				msg = scanner.Text()
 			}
-			req := BEB.BestEffortBroadcast_Req_Message{
+			req := BEB.BestEffortBroadcast_Req_Message {
 				Addresses: receivers,
 				Message:   msg}
 			beb.Req <- req
@@ -94,13 +119,11 @@ func main() {
 	// receptor de broadcasts
 	go func() {
 		for {
-
 			in := <-beb.Ind
 			fmt.Printf("Message from %v: %v\n", in.From, in.Message)
 
 		}
 	}()
 
-	blq := make(chan int)
-	<-blq
+	queueUserInput()
 }
