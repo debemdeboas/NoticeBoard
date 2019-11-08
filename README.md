@@ -8,4 +8,4 @@ go run *.go <YOUR IP> <ADDR LIST>
 go run *.go localhost:3001 localhost:3002 localhost:3003
 ~~~
 
-## How it work
+## How it works

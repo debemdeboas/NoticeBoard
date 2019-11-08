@@ -28,6 +28,7 @@ type User struct {
 	board      Board
 	id         int
 	issueCount int
+	username   string
 
 	_ struct{}
 }
@@ -86,8 +87,17 @@ func main() {
 	addrs := os.Args[1:]
 	fmt.Println(addrs)
 
+	fmt.Printf("Hello! How do you wish to be called?\n> ")
+	scanner := bufio.NewScanner(os.Stdin)
+	var username string
+	if scanner.Scan() {
+		username = scanner.Text()
+	}
+	else {
+		username = "Guest" + generateRandomID()
+	}
+
 	messageDaemon := StartMessageHandlerDaemon(addrs)
-	messageDaemon.SendMessage(MImAlive)
 
 	// queueUserInput()
 	<-(make(chan struct{}))
