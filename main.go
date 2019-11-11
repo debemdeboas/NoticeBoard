@@ -69,7 +69,7 @@ func queueUserInput(m MessageHandlerDaemon) {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
-		fmt.Printf("1) Create new issue\n2) Edit issue\n3) Delete issue\n0) Exit\n> ")
+		fmt.Printf("1) Create new issue\n2) Edit issue\n3) Delete issue\n4) Show board as JSON\n0) Exit\n> ")
 		if scanner.Scan() {
 			switch scanner.Text() {
 			case "0":
@@ -85,12 +85,20 @@ func queueUserInput(m MessageHandlerDaemon) {
 				m.user.EditIssue(scanner.Text())
 			case "3":
 				m.user.DeleteIssue(scanner.Text())
+			case "4":
+				m.user.ShowBoard()
 			default:
 				fmt.Println("Invalid input.")
 				log.Info("queueUserInput: '" + scanner.Text() + "' is not a valid choice.")
 			}
 		}
 	}
+}
+
+// ShowBoard prints the board to the screen as indented JSON
+func (u *User) ShowBoard() {
+	out, _ := json.MarshalIndent(u.Board, "", "    ")
+	fmt.Println(string(out))
 }
 
 // CreateIssue creates an issue and adds that issue to the board

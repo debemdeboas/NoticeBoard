@@ -5,7 +5,7 @@ import "time"
 // Message constants
 const (
 	CTimeLayout = time.RFC3339
-	CTimeout    = 1500 // in milliseconds
+	CTimeout    = 2500 // in milliseconds
 
 	MMessageIDDataSeparator = ";;/data/;;"
 	MNewUser                = "MESSAGE_NEW_USER" + MMessageIDDataSeparator
