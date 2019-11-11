@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -13,8 +14,8 @@ import (
 
 // IssueID represents an issue's ID
 type IssueID struct {
-	IssueNumber int
 	CreatorID   string
+	IssueNumber int
 }
 
 // Issue represents an issue
@@ -31,9 +32,9 @@ type Board struct {
 
 // User represents a user
 type User struct {
-	Board      *Board
-	IssueCount int
 	Username   string
+	IssueCount int
+	Board      *Board
 }
 
 func buildBoard(jBoard string) *Board {
@@ -59,9 +60,9 @@ func (b *Board) Join(newBoard Board) {
 
 func newUser(b Board, name string) User {
 	return User{
-		Board:      &b,
 		Username:   name,
-		IssueCount: 0,
+		IssueCount: 1,
+		Board:      &b,
 	}
 }
 
@@ -69,24 +70,45 @@ func queueUserInput(m MessageHandlerDaemon) {
 	scanner := bufio.NewScanner(os.Stdin)
 
 	for {
-		fmt.Printf("1) Create new issue\n2) Edit issue\n3) Delete issue\n4) Show board as JSON\n0) Exit\n> ")
+		fmt.Printf("============ MENU ============\n" +
+			"1) Create new issue\n" +
+			"2) Edit issue\n" +
+			"3) Delete issue\n" +
+			"4) Show board...\n" +
+			"0) Exit\n> ")
 		if scanner.Scan() {
 			switch scanner.Text() {
 			case "0":
 				return
 			case "1":
-				fmt.Printf("--- Creating a new issue ---\n" +
+				fmt.Printf("---- Creating a new issue ----\n" +
 					"Description: ")
 				if scanner.Scan() {
 					m.user.CreateIssue(scanner.Text())
 					m.SendMessage(MBoard + m.user.Board.toString())
 				}
 			case "2":
-				m.user.EditIssue(scanner.Text())
+				m.user.EditIssue(
+					scanner,
+					m.user.Board.GetIssueFromID(
+						readIssueID(scanner),
+					),
+				)
 			case "3":
 				m.user.DeleteIssue(scanner.Text())
 			case "4":
-				m.user.ShowBoard()
+				fmt.Printf("4.1) As text\n4.2) As indented JSON\n> ")
+				if scanner.Scan() {
+					switch scanner.Text() {
+					case "1", "4.1":
+						m.user.Board.ShowBoardAsText()
+					case "2", "4.2":
+						m.user.Board.ShowBoardAsJSON()
+					default:
+						fmt.Println("Invalid input.")
+						log.Info("queueUserInput: ShowBoard: '" + scanner.Text() + "' is not a valid choice.")
+					}
+				}
 			default:
 				fmt.Println("Invalid input.")
 				log.Info("queueUserInput: '" + scanner.Text() + "' is not a valid choice.")
@@ -95,10 +117,39 @@ func queueUserInput(m MessageHandlerDaemon) {
 	}
 }
 
-// ShowBoard prints the board to the screen as indented JSON
-func (u *User) ShowBoard() {
-	out, _ := json.MarshalIndent(u.Board, "", "    ")
-	fmt.Println(string(out))
+func readIssueID(scanner *bufio.Scanner) (IssueID, error) {
+	id := IssueID{}
+	fmt.Printf("-------- Select issue --------\n" +
+		"Issue creator: ")
+	if scanner.Scan() {
+		id.CreatorID = scanner.Text()
+	}
+	fmt.Print("Issue number: ")
+	if scanner.Scan() {
+		var err error
+		id.IssueNumber, err = strconv.Atoi(scanner.Text())
+		if err != nil {
+			log.Warn("readIssueID: Invalid issue number: " + scanner.Text())
+			return id, err
+		}
+	}
+	return id, nil
+}
+
+// GetIssueFromID returns the Issue associated with an ID
+func (b *Board) GetIssueFromID(id IssueID, err error) *Issue {
+	if err != nil {
+		return nil
+	}
+
+	for i := 0; i < len(b.Issues); i++ {
+		if b.Issues[i].ID == id {
+			return &(b.Issues[i])
+		}
+	}
+
+	fmt.Println("Couldn't find issue <" + id.CreatorID + ", " + strconv.Itoa(id.IssueNumber) + ">.")
+	return nil
 }
 
 // CreateIssue creates an issue and adds that issue to the board
@@ -106,8 +157,8 @@ func (u *User) CreateIssue(params string) {
 	u.Board.Issues = append(u.Board.Issues,
 		Issue{
 			ID: IssueID{
-				u.IssueCount,
-				u.Username,
+				IssueNumber: u.IssueCount,
+				CreatorID:   u.Username,
 			},
 			Content: params,
 		},
@@ -117,7 +168,7 @@ func (u *User) CreateIssue(params string) {
 }
 
 // EditIssue edits an issue and saves the changes on the board
-func (u *User) EditIssue(params string) {
+func (u *User) EditIssue(scanner *bufio.Scanner, issue *Issue) {
 	// For Issue in []Issues -> try to find a specific issue
 	u.Board.TimeStamp = time.Now()
 }
@@ -126,6 +177,20 @@ func (u *User) EditIssue(params string) {
 func (u *User) DeleteIssue(params string) {
 	// For Issue in []Issues -> try to find a specific issue
 	u.Board.TimeStamp = time.Now()
+}
+
+// ShowBoardAsText prints the board to the screen as text
+func (b *Board) ShowBoardAsText() {
+	for i := 0; i < len(b.Issues); i++ {
+		fmt.Printf(b.Issues[i].Content + b.Issues[i].ID.CreatorID + strconv.Itoa(b.Issues[i].ID.IssueNumber))
+	}
+	fmt.Print("\n")
+}
+
+// ShowBoardAsJSON prints the board to the screen as indented JSON
+func (b *Board) ShowBoardAsJSON() {
+	out, _ := json.MarshalIndent(b, "", "    ")
+	fmt.Println(string(out))
 }
 
 func main() {
