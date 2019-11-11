@@ -53,20 +53,15 @@ func (module PP2PLink) Init(address string) {
 func (module PP2PLink) Start(address string) {
 
 	go func() {
-
 		listen, _ := net.Listen("tcp4", address)
 		for {
-
 			// aceita repetidamente tentativas novas de conexao
-
 			conn, err := listen.Accept()
 			// fmt.Println(err)
 			if err != nil {
 				continue
 			}
-
 			go func() {
-
 				// quando aceita, repetidamente recebe mensagens na conexao TCP (sem fechar)
 				// e passa para cima
 				for {
@@ -97,7 +92,7 @@ func (module PP2PLink) Start(address string) {
 							Message: string(actual)}
 
 						module.Ind <- msg
-						fmt.Println(msg)
+						// fmt.Println(msg)
 					}
 				}
 			}()

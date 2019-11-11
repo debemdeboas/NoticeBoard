@@ -1,5 +1,9 @@
 # Distributed, Concurrent Issue Board
 
+## Prerequisites
+
+This project uses Logrus as a logging framework. To install Logrus, type this in your shell: `go get "github.com/sirupsen/logrus"`.
+
 To run:
 
 ~~~bash
