@@ -182,7 +182,8 @@ func (u *User) DeleteIssue(params string) {
 // ShowBoardAsText prints the board to the screen as text
 func (b *Board) ShowBoardAsText() {
 	for i := 0; i < len(b.Issues); i++ {
-		fmt.Printf(b.Issues[i].Content + b.Issues[i].ID.CreatorID + strconv.Itoa(b.Issues[i].ID.IssueNumber))
+		strID := "[" + b.Issues[i].ID.CreatorID + "-" + strconv.Itoa(b.Issues[i].ID.IssueNumber) + "]"
+		fmt.Println(strID, ": ", b.Issues[i].Content)
 	}
 	fmt.Print("\n")
 }
