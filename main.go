@@ -88,14 +88,18 @@ func queueUserInput(m MessageHandlerDaemon) {
 					m.SendMessage(MBoard + m.user.Board.toString())
 				}
 			case "2":
-				m.user.EditIssue(
-					scanner,
+				issue, _ := m.user.Board.GetIssueFromID(
+					readIssueID(scanner),
+				)
+				m.user.EditIssue(scanner, issue)
+				m.SendMessage(MBoard + m.user.Board.toString())
+			case "3":
+				m.user.DeleteIssue(
 					m.user.Board.GetIssueFromID(
 						readIssueID(scanner),
 					),
 				)
-			case "3":
-				m.user.DeleteIssue(scanner.Text())
+				m.SendMessage(MBoard + m.user.Board.toString())
 			case "4":
 				fmt.Printf("4.1) As text\n4.2) As indented JSON\n> ")
 				if scanner.Scan() {
@@ -137,19 +141,19 @@ func readIssueID(scanner *bufio.Scanner) (IssueID, error) {
 }
 
 // GetIssueFromID returns the Issue associated with an ID
-func (b *Board) GetIssueFromID(id IssueID, err error) *Issue {
+func (b *Board) GetIssueFromID(id IssueID, err error) (*Issue, int) {
 	if err != nil {
-		return nil
+		return nil, -1
 	}
 
 	for i := 0; i < len(b.Issues); i++ {
 		if b.Issues[i].ID == id {
-			return &(b.Issues[i])
+			return &(b.Issues[i]), i
 		}
 	}
 
 	fmt.Println("Couldn't find issue <" + id.CreatorID + ", " + strconv.Itoa(id.IssueNumber) + ">.")
-	return nil
+	return nil, -1
 }
 
 // CreateIssue creates an issue and adds that issue to the board
@@ -169,13 +173,30 @@ func (u *User) CreateIssue(params string) {
 
 // EditIssue edits an issue and saves the changes on the board
 func (u *User) EditIssue(scanner *bufio.Scanner, issue *Issue) {
-	// For Issue in []Issues -> try to find a specific issue
+	if issue == nil {
+		return
+	}
+
+	fmt.Println("[*][*][*] Editing issue", issue.ID, "[*][*][*]", "\nOld description:", issue.Content)
+	fmt.Print("New description: ")
+	if scanner.Scan() {
+		issue.Content = scanner.Text()
+	}
+
 	u.Board.TimeStamp = time.Now()
 }
 
 // DeleteIssue deletes an issue from the board
-func (u *User) DeleteIssue(params string) {
-	// For Issue in []Issues -> try to find a specific issue
+func (u *User) DeleteIssue(issue *Issue, issueindex int) {
+	if issue == nil {
+		return
+	}
+
+	fmt.Println("[!][!][!] Deleting issue", issue.ID, "[!][!][!]", "\nContent:", issue.Content)
+
+	copy(u.Board.Issues[issueindex:], u.Board.Issues[issueindex+1:])
+	u.Board.Issues = u.Board.Issues[:len(u.Board.Issues)-1]
+
 	u.Board.TimeStamp = time.Now()
 }
 
@@ -230,16 +251,6 @@ func main() {
 			username,
 		),
 	)
-
-	// var buf = new(bytes.Buffer)
-	// enc := json.NewEncoder(buf)
-	// enc.Encode(messageDaemon.user)
-	// f, err := os.Create("daemon.json")
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// defer f.Close()
-	// io.Copy(f, buf)
 
 	queueUserInput(messageDaemon)
 }
