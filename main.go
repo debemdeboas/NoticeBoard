@@ -68,7 +68,6 @@ func newUser(b Board, name string) User {
 
 func queueUserInput(m MessageHandlerDaemon) {
 	scanner := bufio.NewScanner(os.Stdin)
-
 	for {
 		fmt.Printf("============ MENU ============\n" +
 			"1) Create new issue\n" +
@@ -91,15 +90,19 @@ func queueUserInput(m MessageHandlerDaemon) {
 				issue, _ := m.user.Board.GetIssueFromID(
 					readIssueID(scanner),
 				)
-				m.user.EditIssue(scanner, issue)
-				m.SendMessage(MBoard + m.user.Board.toString())
+				sendmsg := m.user.EditIssue(scanner, issue)
+				if sendmsg {
+					m.SendMessage(MBoard + m.user.Board.toString())
+				}
 			case "3":
-				m.user.DeleteIssue(
+				sendmsg := m.user.DeleteIssue(
 					m.user.Board.GetIssueFromID(
 						readIssueID(scanner),
 					),
 				)
-				m.SendMessage(MBoard + m.user.Board.toString())
+				if sendmsg {
+					m.SendMessage(MBoard + m.user.Board.toString())
+				}
 			case "4":
 				fmt.Printf("4.1) As text\n4.2) As indented JSON\n> ")
 				if scanner.Scan() {
@@ -172,9 +175,9 @@ func (u *User) CreateIssue(params string) {
 }
 
 // EditIssue edits an issue and saves the changes on the board
-func (u *User) EditIssue(scanner *bufio.Scanner, issue *Issue) {
+func (u *User) EditIssue(scanner *bufio.Scanner, issue *Issue) bool {
 	if issue == nil {
-		return
+		return false
 	}
 
 	fmt.Println("[*][*][*] Editing issue", issue.ID, "[*][*][*]", "\nOld description:", issue.Content)
@@ -182,22 +185,22 @@ func (u *User) EditIssue(scanner *bufio.Scanner, issue *Issue) {
 	if scanner.Scan() {
 		issue.Content = scanner.Text()
 	}
-
 	u.Board.TimeStamp = time.Now()
+	return true
 }
 
 // DeleteIssue deletes an issue from the board
-func (u *User) DeleteIssue(issue *Issue, issueindex int) {
+func (u *User) DeleteIssue(issue *Issue, issueindex int) bool {
 	if issue == nil {
-		return
+		return false
 	}
 
 	fmt.Println("[!][!][!] Deleting issue", issue.ID, "[!][!][!]", "\nContent:", issue.Content)
 
 	copy(u.Board.Issues[issueindex:], u.Board.Issues[issueindex+1:])
 	u.Board.Issues = u.Board.Issues[:len(u.Board.Issues)-1]
-
 	u.Board.TimeStamp = time.Now()
+	return true
 }
 
 // ShowBoardAsText prints the board to the screen as text
@@ -221,7 +224,17 @@ func main() {
 		return
 	}
 
-	// logFile := time.Now().Format("20060102") + "_IssueTracker.log"
+	addrs := os.Args[1:]
+
+	fmt.Printf("Hi! How do you wish to be called?\n> ")
+	scanner := bufio.NewScanner(os.Stdin)
+
+	var username string
+	if scanner.Scan() {
+		username = scanner.Text()
+	}
+
+	// logFile := username + time.Now().Format("20060102") + "_NoticeBoard.log"
 	// file, err := os.OpenFile(logFile, os.O_CREATE|os.O_RDWR, 0666)
 	// if err != nil {
 	// 	fmt.Println("Could not create logs file. Error: " + err.Error())
@@ -230,17 +243,8 @@ func main() {
 	// 	log.SetOutput(file)
 	// }
 
-	addrs := os.Args[1:]
 	log.Info(addrs)
 
-	fmt.Printf("Hi! How do you wish to be called?\n> ")
-	scanner := bufio.NewScanner(os.Stdin)
-
-	// username := "Guest " + strconv.Itoa(rand.Intn(1000))
-	var username string
-	if scanner.Scan() {
-		username = scanner.Text()
-	}
 	fmt.Println("Hello, " + username + ", and welcome to the Notice Board.\n" +
 		"Here you can create, edit and delete issues and synchronize your Board with other users automatically!")
 
