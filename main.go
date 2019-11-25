@@ -37,6 +37,7 @@ type User struct {
 	Board      *Board
 }
 
+// buildBoard decodes a JSON-formatted string into a Board structure
 func buildBoard(jBoard string) *Board {
 	var b *Board
 	if err := json.Unmarshal([]byte(jBoard), &b); err != nil {
@@ -45,6 +46,7 @@ func buildBoard(jBoard string) *Board {
 	return b
 }
 
+// toString encodes a Board structure into a JSON-formatted string
 func (b *Board) toString() string {
 	var buf = new(bytes.Buffer)
 	json.NewEncoder(buf).Encode(b)
@@ -66,7 +68,8 @@ func newUser(b Board, name string) User {
 	}
 }
 
-func queueUserInput(m MessageHandlerDaemon) {
+// QueueUserInput prompt the user for inputs using menus
+func QueueUserInput(m MessageHandlerDaemon) {
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Printf("============ MENU ============\n" +
@@ -137,6 +140,7 @@ func readIssueID(scanner *bufio.Scanner) (IssueID, error) {
 		id.IssueNumber, err = strconv.Atoi(scanner.Text())
 		if err != nil {
 			log.Warn("readIssueID: Invalid issue number: " + scanner.Text())
+			fmt.Println("Invalid issue number:", scanner.Text())
 			return id, err
 		}
 	}
@@ -234,20 +238,29 @@ func main() {
 		username = scanner.Text()
 	}
 
-	// logFile := username + time.Now().Format("20060102") + "_NoticeBoard.log"
-	// file, err := os.OpenFile(logFile, os.O_CREATE|os.O_RDWR, 0666)
-	// if err != nil {
-	// 	fmt.Println("Could not create logs file. Error: " + err.Error())
-	// } else {
-	// 	defer file.Close()
-	// 	log.SetOutput(file)
-	// }
+	fmt.Print("Do you wish to save the logs to a file? [y/N]: ")
+	if scanner.Scan() {
+		switch scanner.Text() {
+		case "Y", "y":
+			logFile := username + time.Now().Format(CTimeLayout) + "_NoticeBoard.log"
+			fmt.Println("Saving logs to file", logFile)
+			file, err := os.OpenFile(logFile, os.O_CREATE|os.O_RDWR, 0666)
+			if err != nil {
+				fmt.Println("Could not create logs file. Error: " + err.Error())
+			} else {
+				defer file.Close()
+				log.SetOutput(file)
+			}
+		default: // Do nothing
+		}
+	}
 
-	log.Info(addrs)
+	log.Info(addrs) // Logs the addresses of the other users
 
 	fmt.Println("Hello, " + username + ", and welcome to the Notice Board.\n" +
 		"Here you can create, edit and delete issues and synchronize your Board with other users automatically!")
 
+	// Start the message handler daemon and return a reference to it
 	messageDaemon := StartMessageHandlerDaemon(
 		addrs,
 		newUser(
@@ -256,5 +269,8 @@ func main() {
 		),
 	)
 
-	queueUserInput(messageDaemon)
+	// Wait for an updated version of the board from the other users
+	time.Sleep(CTimeout * time.Millisecond)
+
+	QueueUserInput(messageDaemon)
 }

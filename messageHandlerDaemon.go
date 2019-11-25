@@ -29,6 +29,9 @@ func (daemon *MessageHandlerDaemon) SendMessage(msg string) {
 func (daemon *MessageHandlerDaemon) MessageLoop() {
 	go daemon.SendMessage(MNewUser)
 
+	// Wait for a network message from the other users in order to get the
+	// most recent version of the board or create a new local board (in this
+	// case this instance is the first one to connect)
 	createBoard := false
 	select {
 	case in := <-daemon.beb.Ind:
@@ -106,6 +109,8 @@ func StartMessageHandlerDaemon(addrs []string, user User) MessageHandlerDaemon {
 		user:      &user,
 	}
 
+	// Start the daemon's message loop in a separate thread
 	go daemon.MessageLoop()
+
 	return daemon
 }
